@@ -1,4 +1,11 @@
 #include "systemcalls.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <errno.h>
 
 /**
  * @param cmd the command to execute with system()
@@ -16,8 +23,11 @@ bool do_system(const char *cmd)
  *   and return a boolean true if the system() call completed with success
  *   or false() if it returned a failure
 */
-
-    return true;
+    int status = system(cmd);
+    if(status == -1){
+        return false;
+    }
+    return WEXITSTATUS(status) == 0;
 }
 
 /**
@@ -58,9 +68,33 @@ bool do_exec(int count, ...)
  *   as second argument to the execv() command.
  *
 */
+    pid_t pid = fork();
+    if (pid == -1){
+        perror("Fork failed");
+        va_end(args);
+        return false;
+    }
+    if (pid == 0){
+        if (execv(command[0],command) == -1){
+            perror("execv failed!");
+            exit(1);
+        }     
+    }    
+    else{
+        int status;
+        wait(&status);
+        if(WIFEXITED(status)){
+            printf("Child process finished with exit status : %d ",WEXITSTATUS(status));
+            va_end(args);
+            return WEXITSTATUS(status) == 0;
+        }
+        else{
+            printf("Child process didnot exit normally : %d ",WEXITSTATUS(status));
 
+            return false;
+        }
+    }
     va_end(args);
-
     return true;
 }
 
@@ -83,7 +117,7 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
     // this line is to avoid a compile warning before your implementation is complete
     // and may be removed
     command[count] = command[count];
-
+    
 
 /*
  * TODO
@@ -92,7 +126,39 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *   The rest of the behaviour is same as do_exec()
  *
 */
-
+    pid_t pid = fork();
+    if (pid == -1) {
+        return false;  
+    }
+    if(pid == 0){
+        int fd = open(outputfile,O_WRONLY | O_CREAT | O_TRUNC);
+        if (fd == -1){
+            perror("Fork failed");
+            va_end(args);
+            return false;
+        }
+        if(dup2(fd,STDOUT_FILENO) == -1){
+            perror("Not able to redirect to file");
+            exit(1);
+        }
+        close(fd);
+        if(execv(command[0],command)==-1){
+            perror("execv failed");
+            exit(1);
+        }
+    }
+    else{
+        int status;
+        wait(&status);
+        if( WIFEXITED(status) ){
+            return WEXITSTATUS(status) == 0;
+        }
+        else{
+            perror("Child didn't end successfully");
+            return false;
+        }
+    }
+    
     va_end(args);
 
     return true;
