@@ -12,6 +12,17 @@ FINDER_APP_DIR=$(realpath $(dirname $0))
 ARCH=arm64
 CROSS_COMPILE=aarch64-linux-gnu-
 
+# Check for the standard Ubuntu/Debian name first
+if command -v aarch64-linux-gnu-gcc > /dev/null; then
+    CROSS_COMPILE=aarch64-linux-gnu-
+# Then check for the "none" version often found in ARM's official toolchain
+elif command -v aarch64-none-linux-gnu-gcc > /dev/null; then
+    CROSS_COMPILE=aarch64-none-linux-gnu-
+else
+    echo "ERROR: No aarch64 cross-compiler found in PATH"
+    exit 1
+fi
+
 if [ $# -lt 1 ]; then
     echo "Using default directory ${OUTDIR} for output"
 else
