@@ -76,27 +76,27 @@ make -j$(nproc) ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}
 make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} CONFIG_PREFIX=${OUTDIR}/rootfs install
 
 ########################################
-# Library Dependencies - BRUTE FORCE FIX
+# Library Dependencies - DYNAMIC FIX
 ########################################
 echo "Resolving Library dependencies..."
+cd "${OUTDIR}/rootfs"
 
-# We know from your 'find' command that they live here:
-SRC_LIB="/usr/aarch64-linux-gnu/lib"
+# Ask the cross-compiler exactly where these files are located
+# This avoids hardcoded paths that fail in GitHub Actions
+LIB_INTERPRETER=$(${CROSS_COMPILE}gcc -print-file-name=ld-linux-aarch64.so.1)
+LIB_C=$(${CROSS_COMPILE}gcc -print-file-name=libc.so.6)
+LIB_M=$(${CROSS_COMPILE}gcc -print-file-name=libm.so.6)
+LIB_RESOLV=$(${CROSS_COMPILE}gcc -print-file-name=libresolv.so.2)
 
-# If the path doesn't exist, try to find it via compiler
-if [ ! -d "$SRC_LIB" ]; then
-    SYSROOT=$(${CROSS_COMPILE}gcc -print-sysroot)
-    SRC_LIB="${SYSROOT}/lib"
-fi
+# Copy them using -L to ensure we get the actual file, not a link
+cp -L "$LIB_INTERPRETER" lib/
+cp -L "$LIB_C" lib64/
+cp -L "$LIB_M" lib64/
+cp -L "$LIB_RESOLV" lib64/
 
-# Copy libraries to BOTH /lib and /lib64 to ensure loader finds them
-# -L is CRITICAL: it copies the actual binary, not a broken shortcut
-for libpath in "${OUTDIR}/rootfs/lib" "${OUTDIR}/rootfs/lib64"; do
-    cp -L "${SRC_LIB}/ld-linux-aarch64.so.1" "$libpath/"
-    cp -L "${SRC_LIB}/libc.so.6" "$libpath/"
-    cp -L "${SRC_LIB}/libm.so.6" "$libpath/"
-    cp -L "${SRC_LIB}/libresolv.so.2" "$libpath/"
-done
+# Create symlink for the loader in lib64 as well
+cd lib64
+ln -sf ../lib/ld-linux-aarch64.so.1 ld-linux-aarch64.so.1
 
 ########################################
 # Device Nodes & Writer Utility
