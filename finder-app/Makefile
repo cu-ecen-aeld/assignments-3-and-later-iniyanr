@@ -1,13 +1,15 @@
-CC ?= $(CROSS_COMPILE)gcc
-CFLAGS = -Wall -Werror
-TARGET = writer
-SRC = writer.c
-OBJ = $(SRC:.c=.o)
-all: $(TARGET)
-$(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+# Use the CROSS_COMPILE variable if provided, otherwise default to gcc
+CC = $(CROSS_COMPILE)gcc
+CFLAGS = -g -Wall
+
+# The default target
+all: writer
+
+writer: writer.o
+	$(CC) $(CFLAGS) -o writer writer.o
+
+writer.o: writer.c
+	$(CC) $(CFLAGS) -c writer.c
+
 clean:
-	rm -f $(TARGET) $(OBJ)
-.PHONY: all clean
+	rm -f writer *.o

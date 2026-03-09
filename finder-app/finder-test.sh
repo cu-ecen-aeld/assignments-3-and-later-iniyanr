@@ -30,9 +30,9 @@ MATCHSTR="The number of files are ${NUMFILES} and the number of matching lines a
 echo "Writing ${NUMFILES} files containing string ${WRITESTR} to ${WRITEDIR}"
 
 rm -rf "${WRITEDIR}"
-rm -f writer
-make clean || true
-make CC=gcc
+# rm -f writer
+# make clean || true
+# make CC=gcc
 # create $WRITEDIR if not assignment1
 assignment=`cat ../conf/assignment.txt`
 

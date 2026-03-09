@@ -1,3 +1,4 @@
+#!/bin/sh
 writefile=$1
 writestr=$2
 
