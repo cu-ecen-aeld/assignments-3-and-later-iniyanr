@@ -1,3 +1,4 @@
+#!/bin/sh
 NAME=aesdsocket
 DAEMON=/usr/bin/$NAME
 PIDFILE=/var/run/$NAME.pid
