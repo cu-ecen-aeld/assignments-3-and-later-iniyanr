@@ -89,7 +89,7 @@ void* client_thread(void* thread_param){
 
         if (recv_byte == '\n') {
             pthread_mutex_lock(&file_mutex);
-            
+
             int fd = open(DATA_FILE, O_WRONLY | O_CREAT | O_APPEND, 0644);
             if(fd >= 0){
                 write(fd, packet_buf, total_bytes);
@@ -105,8 +105,8 @@ void* client_thread(void* thread_param){
                 }
                 close(fd);
             }
+
             pthread_mutex_unlock(&file_mutex);
-            
             total_bytes = 0; 
         }
     }
